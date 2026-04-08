@@ -1,27 +1,27 @@
-const Header = ({ course }) => {
-  return <h1>{course}</h1>;
+const Header = ({ title }) => {
+  return <h1>{title}</h1>;
 };
 
-const Exercise = ({ part, exercise }) => {
+const Part = ({ name, count }) => {
   return (
     <p>
-      {part} {exercise}
+      {name} {count}
     </p>
   );
 };
 
-const Content = ({ parts }) => {
+const Content = ({ part1, part2, part3 }) => {
   return (
-    <>
-      {parts.map((part, index) => (
-        <Exercise key={index} part={part.name} exercise={part.exercises} />
-      ))}
-    </>
+    <div>
+      <Part name={part1.name} count={part1.count} />
+      <Part name={part2.name} count={part2.count} />
+      <Part name={part3.name} count={part3.count} />
+    </div>
   );
 };
 
-const Total = ({ exercises }) => {
-  return <p>Number of exercises {exercises}</p>;
+const Total = ({ sum }) => {
+  return <p>Number of exercises {sum}</p>;
 };
 
 const App = () => {
@@ -35,15 +35,13 @@ const App = () => {
 
   return (
     <div>
-      <Header course={course} />
+      <Header title={course} />
       <Content
-        parts={[
-          { name: part1, exercises: exercises1 },
-          { name: part2, exercises: exercises2 },
-          { name: part3, exercises: exercises3 },
-        ]}
+        part1={{ name: part1, count: exercises1 }}
+        part2={{ name: part2, count: exercises2 }}
+        part3={{ name: part3, count: exercises3 }}
       />
-      <Total exercises={exercises1 + exercises2 + exercises3} />
+      <Total sum={exercises1 + exercises2 + exercises3} />
     </div>
   );
 };
