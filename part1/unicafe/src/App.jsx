@@ -18,15 +18,14 @@ const ButtonsGroup = ({ buttons }) => {
 
 const StatisticLine = ({ text, value }) => {
   return (
-    <div>
-      <span>
-        {text}: {value}
-      </span>
-    </div>
+    <tr>
+      <td>{text}</td>
+      <td>{value}</td>
+    </tr>
   );
 };
 
-const Statistic = ({ statistics }) => {
+const Statistics = ({ statistics }) => {
   const feedbackGiven = statistics.some((stat) => stat.value > 0);
 
   if (!feedbackGiven) {
@@ -34,11 +33,13 @@ const Statistic = ({ statistics }) => {
   }
 
   return (
-    <div>
-      {statistics.map((stat) => (
-        <StatisticLine key={stat.text} text={stat.text} value={stat.value} />
-      ))}
-    </div>
+    <table>
+      <tbody>
+        {statistics.map((stat) => (
+          <StatisticLine key={stat.text} text={stat.text} value={stat.value} />
+        ))}
+      </tbody>
+    </table>
   );
 };
 
@@ -88,7 +89,7 @@ const App = () => {
         ]}
       />
       <Header text="Statistics" />
-      <Statistic
+      <Statistics
         statistics={[
           { text: "Good", value: good },
           { text: "Neutral", value: neutral },
