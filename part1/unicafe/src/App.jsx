@@ -26,10 +26,16 @@ const Stat = ({ text, value }) => {
   );
 };
 
-const Statistic = ({ statistic }) => {
+const Statistic = ({ statistics }) => {
+  const feedbackGiven = statistics.some((stat) => stat.value > 0);
+
+  if (!feedbackGiven) {
+    return <div>No feedback given</div>;
+  }
+
   return (
     <div>
-      {statistic.map((stat) => (
+      {statistics.map((stat) => (
         <Stat key={stat.text} text={stat.text} value={stat.value} />
       ))}
     </div>
@@ -83,7 +89,7 @@ const App = () => {
       />
       <Header text="Statistics" />
       <Statistic
-        statistic={[
+        statistics={[
           { text: "Good", value: good },
           { text: "Neutral", value: neutral },
           { text: "Bad", value: bad },
