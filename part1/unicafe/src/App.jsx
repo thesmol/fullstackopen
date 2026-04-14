@@ -16,7 +16,7 @@ const ButtonsGroup = ({ buttons }) => {
   );
 };
 
-const Stat = ({ text, value }) => {
+const StatisticLine = ({ text, value }) => {
   return (
     <div>
       <span>
@@ -36,7 +36,7 @@ const Statistic = ({ statistics }) => {
   return (
     <div>
       {statistics.map((stat) => (
-        <Stat key={stat.text} text={stat.text} value={stat.value} />
+        <StatisticLine key={stat.text} text={stat.text} value={stat.value} />
       ))}
     </div>
   );
