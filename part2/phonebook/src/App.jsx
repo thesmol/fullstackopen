@@ -1,23 +1,14 @@
 import { useState } from "react";
-
-const Person = ({ person }) => {
-  return (
-    <p>
-      {person.name}, {person.number}
-    </p>
-  );
-};
-
-const Header = ({ text }) => {
-  return <h2>{text}</h2>;
-};
+import PersonsList from "./components/PersonsList";
+import Filter from "./components/Filter";
+import NewPersonForm from "./components/NewPersonForm";
 
 const App = () => {
   const [persons, setPersons] = useState([
-    { name: "Arto Hellas", number: "040-123456", id: 1 },
-    { name: "Ada Lovelace", number: "39-44-5323523", id: 2 },
-    { name: "Dan Abramov", number: "12-43-234345", id: 3 },
-    { name: "Mary Poppendieck", number: "39-23-6423122", id: 4 },
+    { name: "Arto Hellas", phone: "040-123456", id: 1 },
+    { name: "Ada Lovelace", phone: "39-44-5323523", id: 2 },
+    { name: "Dan Abramov", phone: "12-43-234345", id: 3 },
+    { name: "Mary Poppendieck", phone: "39-23-6423122", id: 4 },
   ]);
 
   const [newPerson, setNewPerson] = useState({
@@ -28,12 +19,12 @@ const App = () => {
 
   const [filterName, setFilterName] = useState("");
 
-  const changeName = (event) => {
-    setNewPerson({ ...newPerson, name: event.target.value });
-  };
-
   const changeFilter = (event) => {
     setFilterName(event.target.value);
+  };
+
+  const changeName = (event) => {
+    setNewPerson({ ...newPerson, name: event.target.value });
   };
 
   const changePhone = (event) => {
@@ -76,43 +67,17 @@ const App = () => {
 
   return (
     <div>
-      <Header text="Phonebook" />
-      <div>
-        filter shown with:
-        <input
-          value={filterName}
-          onChange={changeFilter}
-          placeholder="Search..."
-        />
-      </div>
-      <Header text="Add a new" />
-      <form>
-        <div>
-          name:
-          <input
-            value={newPerson.name}
-            onChange={changeName}
-            placeholder="John Doe"
-          />
-        </div>
-        <div>
-          phone:
-          <input
-            value={newPerson.phone}
-            onChange={changePhone}
-            placeholder="+358..."
-          />
-        </div>
-        <div>
-          <button type="submit" onClick={addNewPerson}>
-            add
-          </button>
-        </div>
-      </form>
-      <Header text="Numbers" />
-      {filteredPersons.map((person) => (
-        <Person key={person.id} person={person} />
-      ))}
+      <h2>Phonebook</h2>
+      <Filter searchString={filterName} onSearchUpdate={changeFilter} />
+      <h3>Add a new</h3>
+      <NewPersonForm
+        newPerson={newPerson}
+        onNameChange={changeName}
+        onPhoneChange={changePhone}
+        onSubmit={addNewPerson}
+      />
+      <h3>Numbers</h3>
+      <PersonsList persons={filteredPersons} />
     </div>
   );
 };
