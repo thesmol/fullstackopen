@@ -59,6 +59,16 @@ const App = () => {
     });
   };
 
+  const deletePerson = (person) => {
+    if (window.confirm(`Delete person ${person.name} forever?`)) {
+      personsService
+        .remove(person.id)
+        .then((removedPerson) =>
+          setPersons(persons.filter((p) => p.id !== removedPerson.id)),
+        );
+    }
+  };
+
   const filteredPersons =
     filterName.length > 0
       ? persons.filter((person) =>
@@ -78,7 +88,7 @@ const App = () => {
         onSubmit={addNewPerson}
       />
       <h3>Numbers</h3>
-      <PersonsList persons={filteredPersons} />
+      <PersonsList persons={filteredPersons} deletePerson={deletePerson} />
     </div>
   );
 };
