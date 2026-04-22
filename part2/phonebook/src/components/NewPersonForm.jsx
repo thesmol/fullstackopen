@@ -17,7 +17,7 @@ const NewPersonForm = ({
       <div>
         phone:
         <input
-          value={newPerson.phone}
+          value={newPerson.number}
           onChange={onPhoneChange}
           placeholder="+358..."
         />

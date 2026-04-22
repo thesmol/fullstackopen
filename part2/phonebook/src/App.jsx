@@ -9,7 +9,7 @@ const App = () => {
 
   const [newPerson, setNewPerson] = useState({
     name: "",
-    phone: "",
+    number: "",
   });
 
   const [filterName, setFilterName] = useState("");
@@ -28,34 +28,50 @@ const App = () => {
     setNewPerson({ ...newPerson, name: event.target.value });
   };
 
-  const changePhone = (event) => {
-    setNewPerson({ ...newPerson, phone: event.target.value });
+  const changeNumber = (event) => {
+    setNewPerson({ ...newPerson, number: event.target.value });
   };
 
-  const checkUserExists = () => {
-    return persons.some(
-      (p) => p.name === newPerson.name && p.phone === newPerson.phone,
-    );
+  const findExistingPerson = () => {
+    return persons.find((p) => p.name === newPerson.name);
+  };
+
+  const updatePerson = (person) => {
+    if (
+      window.confirm(
+        `${person.name} ia already added to the phonebook, 
+        replace the old number with a new one?`,
+      )
+    ) {
+      personsService
+        .update(person.id, { ...person, number: newPerson.number })
+        .then((updatedPerson) => {
+          setPersons(
+            persons.map((p) => (p.id === updatedPerson.id ? updatedPerson : p)),
+          );
+          setNewPerson({ name: "", number: "" });
+        });
+    }
   };
 
   const addNewPerson = (event) => {
     event.preventDefault();
 
-    if (newPerson.name === "" || newPerson.phone === "") {
+    if (newPerson.name === "" || newPerson.number === "") {
       alert("Please fill in both name and phone fields.");
       return;
     }
 
-    if (checkUserExists()) {
-      alert(
-        `${newPerson.name} with phone ${newPerson.phone} is already added to phonebook`,
-      );
+    const existingPerson = findExistingPerson();
+
+    if (existingPerson) {
+      updatePerson(existingPerson);
       return;
     }
 
     personsService.create(newPerson).then((addedPerson) => {
       setPersons(persons.concat(addedPerson));
-      setNewPerson({ name: "", phone: "" });
+      setNewPerson({ name: "", number: "" });
     });
   };
 
@@ -84,7 +100,7 @@ const App = () => {
       <NewPersonForm
         newPerson={newPerson}
         onNameChange={changeName}
-        onPhoneChange={changePhone}
+        onPhoneChange={changeNumber}
         onSubmit={addNewPerson}
       />
       <h3>Numbers</h3>
