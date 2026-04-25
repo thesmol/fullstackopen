@@ -1,7 +1,7 @@
-const SuccessNotification = ({ message }) => {
+const SuccessNotification = ({ message, type }) => {
   if (!message) return null;
 
-  return <div className="successNotification">{message}</div>;
+  return <div className={`${type}Notification`}>{message}</div>;
 };
 
 export default SuccessNotification;

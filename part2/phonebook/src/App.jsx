@@ -51,6 +51,20 @@ const App = () => {
           setPersons(
             persons.map((p) => (p.id === updatedPerson.id ? updatedPerson : p)),
           );
+        })
+        .catch((error) => {
+          if (error.response.status === 404) {
+            setPersons(persons.filter((p) => p.id !== person.id));
+            setNotification({
+              message: `Information about '${person.name}' has already been removed from the server.`,
+              type: "error",
+            });
+            setTimeout(() => {
+              setNotification(null);
+            }, 5000);
+          }
+        })
+        .finally(() => {
           setNewPerson({ name: "", number: "" });
         });
     }
@@ -75,7 +89,10 @@ const App = () => {
       setPersons(persons.concat(addedPerson));
       setNewPerson({ name: "", number: "" });
 
-      setNotification(`Added '${addedPerson.name}'`);
+      setNotification({
+        message: `Added '${addedPerson.name}'`,
+        type: "success",
+      });
       setTimeout(() => {
         setNotification(null);
       }, 5000);
@@ -102,7 +119,10 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-      <SuccessNotification message={notification} />
+      <SuccessNotification
+        message={notification?.message}
+        type={notification?.type}
+      />
       <Filter searchString={filterName} onSearchUpdate={changeFilter} />
       <h3>Add a new</h3>
       <NewPersonForm
