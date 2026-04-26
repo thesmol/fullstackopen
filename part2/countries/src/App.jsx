@@ -28,7 +28,12 @@ function App() {
   if (filteredCountries.length === 1) {
     searchResult = <Country country={filteredCountries[0]} />;
   } else {
-    searchResult = <CountriesList countries={filteredCountries} />;
+    searchResult = (
+      <CountriesList
+        countries={filteredCountries}
+        onCountyShow={(name) => setSearchString(name)}
+      />
+    );
   }
 
   return (

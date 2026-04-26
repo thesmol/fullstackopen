@@ -1,4 +1,6 @@
-const CountriesList = ({ countries }) => {
+import CountyListItem from "./CountyListItem";
+
+const CountriesList = ({ countries, onCountyShow }) => {
   if (countries.length === 0) {
     return <div>No matches</div>;
   }
@@ -10,7 +12,11 @@ const CountriesList = ({ countries }) => {
   return (
     <div>
       {countries.map((country) => (
-        <p key={country.name.official}>{country.name.common}</p>
+        <CountyListItem
+          key={country.name.official}
+          country={country}
+          onCountyShow={() => onCountyShow(country.name.common)}
+        />
       ))}
     </div>
   );
