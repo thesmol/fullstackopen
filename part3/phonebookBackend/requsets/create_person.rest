@@ -8,3 +8,19 @@ content-type: application/json
     "name": "Sam Altman",
     "phone": "123456789"
 }
+
+###
+POST http://localhost:3001/api/persons/ HTTP/1.1
+content-type: application/json
+
+{
+    "phone": "123456789"
+}
+
+###
+POST http://localhost:3001/api/persons/ HTTP/1.1
+content-type: application/json
+
+{
+    "name": "Sam Altman"
+}

@@ -72,7 +72,14 @@ app.post("/api/persons", (request, response) => {
 
   if (!body.name || !body.phone) {
     return response.status(400).json({
-      error: "data missing",
+      error: "name or number are missing",
+    });
+  }
+
+  const isDuplicate = persons.some((person) => person.name === body.name);
+  if (isDuplicate) {
+    return response.status(400).json({
+      error: `name "${body.name}" is already in the phonebook`,
     });
   }
 
