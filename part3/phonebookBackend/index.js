@@ -25,6 +25,20 @@ let persons = [
   },
 ];
 
+app.get("/info", (request, response) => {
+  const now = new Date(Date.now());
+  const personsCount = persons.length;
+
+  const html = `
+  <div>
+    <h3>Phonebook has info for ${personsCount} people</h3>
+    <p>${now}</p>
+  </div>
+  `;
+
+  response.send(html);
+});
+
 app.get("/api/persons", (request, response) => {
   response.json(persons);
 });
@@ -48,18 +62,29 @@ app.delete("/api/persons/:id", (request, response) => {
   response.status(204).end();
 });
 
-app.get("/info", (request, response) => {
-  const now = new Date(Date.now());
-  const personsCount = persons.length;
+const generateId = () => {
+  const randomId = Math.floor(Math.random() * 10000000000);
+  return String(randomId);
+};
 
-  const html = `
-  <div>
-    <h3>Phonebook has info for ${personsCount} people</h3>
-    <p>${now}</p>
-  </div>
-  `;
+app.post("/api/persons", (request, response) => {
+  const body = request.body;
 
-  response.send(html);
+  if (!body.name || !body.phone) {
+    return response.status(400).json({
+      error: "data missing",
+    });
+  }
+
+  const person = {
+    id: generateId(),
+    name: body.name,
+    phone: body.phone,
+  };
+
+  persons = persons.concat(person);
+
+  response.json(person);
 });
 
 const PORT = 3001;
