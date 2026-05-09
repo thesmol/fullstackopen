@@ -103,9 +103,7 @@ const App = () => {
     if (window.confirm(`Delete person ${person.name} forever?`)) {
       personsService
         .remove(person.id)
-        .then((removedPerson) =>
-          setPersons(persons.filter((p) => p.id !== removedPerson.id)),
-        );
+        .then(() => setPersons(persons.filter((p) => p.id !== person.id)));
     }
   };
 
