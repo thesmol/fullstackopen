@@ -13,6 +13,8 @@ app.use(
 const cors = require("cors");
 app.use(cors());
 
+app.use(express.static("dist"));
+
 let persons = [
   {
     id: "1",
@@ -81,7 +83,7 @@ const generateId = () => {
 app.post("/api/persons", (request, response) => {
   const body = request.body;
 
-  if (!body.name || !body.phone) {
+  if (!body.name || !body.number) {
     return response.status(400).json({
       error: "name or number are missing",
     });
@@ -97,7 +99,7 @@ app.post("/api/persons", (request, response) => {
   const person = {
     id: generateId(),
     name: body.name,
-    phone: body.phone,
+    number: body.number,
   };
 
   persons = persons.concat(person);
