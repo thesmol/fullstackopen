@@ -10,6 +10,9 @@ app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :body"),
 );
 
+const cors = require("cors");
+app.use(cors());
+
 let persons = [
   {
     id: "1",
@@ -108,7 +111,7 @@ const unknownEndpoint = (request, response) => {
 
 app.use(unknownEndpoint);
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
