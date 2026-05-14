@@ -9,7 +9,9 @@
       "request": "launch",
       "name": "Phonebook Backend",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/part3/phonebookBackend/index.js"
+      "program": "${workspaceFolder}/part3/phonebookBackend/index.js",
+      "cwd": "${workspaceFolder}/part3/phonebookBackend",
+      "envFile": "${workspaceFolder}/part3/phonebookBackend/.env"
     }
   ]
 }
