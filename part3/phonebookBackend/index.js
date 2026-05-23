@@ -15,7 +15,7 @@ app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :body"),
 );
 
-app.get("/info", (request, response) => {
+app.get("/info", (_request, response) => {
   Person.countDocuments({}).then((count) => {
     const html = `
       <div>
@@ -27,7 +27,7 @@ app.get("/info", (request, response) => {
   });
 });
 
-app.get("/api/persons", (request, response) => {
+app.get("/api/persons", (_request, response) => {
   Person.find({}).then((persons) => {
     response.json(persons);
   });
@@ -47,7 +47,7 @@ app.get("/api/persons/:id", (request, response, next) => {
 
 app.delete("/api/persons/:id", (request, response, next) => {
   Person.findByIdAndDelete(request.params.id)
-    .then((result) => {
+    .then((_result) => {
       response.status(204).end();
     })
     .catch((error) => next(error));
@@ -85,13 +85,13 @@ app.put("/api/persons/:id", (request, response, next) => {
     .catch((error) => next(error));
 });
 
-const unknownEndpoint = (request, response) => {
+const unknownEndpoint = (_request, response) => {
   response.status(404).send({ error: "unknown endpoint" });
 };
 
 app.use(unknownEndpoint);
 
-const errorHandler = (error, request, response, next) => {
+const errorHandler = (error, _request, response, next) => {
   console.error(error.message);
 
   switch (error.name) {
