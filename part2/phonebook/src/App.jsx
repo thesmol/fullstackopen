@@ -51,6 +51,7 @@ const App = () => {
           setPersons(
             persons.map((p) => (p.id === updatedPerson.id ? updatedPerson : p)),
           );
+          setNewPerson({ name: "", number: "" });
         })
         .catch((error) => {
           if (error.response.status === 404) {
@@ -69,9 +70,6 @@ const App = () => {
           setTimeout(() => {
             setNotification(null);
           }, 5000);
-        })
-        .finally(() => {
-          setNewPerson({ name: "", number: "" });
         });
     }
   };
