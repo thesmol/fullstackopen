@@ -53,17 +53,17 @@ app.delete("/api/persons/:id", (request, response, next) => {
     .catch((error) => next(error));
 });
 
-app.post("/api/persons", (request, response) => {
-  const body = request.body;
+app.post("/api/persons", (request, response, next) => {
+  const { name, number } = request.body;
 
-  if (!body.name || !body.number) {
-    return response.status(400).json({ error: "name or number are missing" });
-  }
-
-  const person = new Person({ name: body.name, number: body.number });
-  person.save().then((savedPerson) => {
-    response.json(savedPerson);
-  });
+  // TODO restrict creation of duplicates
+  const person = new Person({ name: name, number: number });
+  person
+    .save()
+    .then((savedPerson) => {
+      response.json(savedPerson);
+    })
+    .catch((error) => next(error));
 });
 
 app.put("/api/persons/:id", (request, response, next) => {
@@ -94,11 +94,16 @@ app.use(unknownEndpoint);
 const errorHandler = (error, request, response, next) => {
   console.error(error.message);
 
-  if (error.name === "CastError") {
-    return response.status(400).send({ error: "malformatted id" });
+  switch (error.name) {
+    case "CastError": {
+      return response.status(400).send({ error: "malformatted id" });
+    }
+    case "ValidationError": {
+      return response.status(400).json({ error: error.message });
+    }
+    default:
+      next(error);
   }
-
-  next(error);
 };
 
 app.use(errorHandler);

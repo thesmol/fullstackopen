@@ -59,10 +59,16 @@ const App = () => {
               message: `Information about '${person.name}' has already been removed from the server.`,
               type: "error",
             });
-            setTimeout(() => {
-              setNotification(null);
-            }, 5000);
+          } else {
+            setNotification({
+              message: error.response.data.error,
+              type: "error",
+            });
           }
+
+          setTimeout(() => {
+            setNotification(null);
+          }, 5000);
         })
         .finally(() => {
           setNewPerson({ name: "", number: "" });
@@ -85,18 +91,29 @@ const App = () => {
       return;
     }
 
-    personsService.create(newPerson).then((addedPerson) => {
-      setPersons(persons.concat(addedPerson));
-      setNewPerson({ name: "", number: "" });
+    personsService
+      .create(newPerson)
+      .then((addedPerson) => {
+        setPersons(persons.concat(addedPerson));
+        setNewPerson({ name: "", number: "" });
 
-      setNotification({
-        message: `Added '${addedPerson.name}'`,
-        type: "success",
+        setNotification({
+          message: `Added '${addedPerson.name}'`,
+          type: "success",
+        });
+        setTimeout(() => {
+          setNotification(null);
+        }, 5000);
+      })
+      .catch((error) => {
+        setNotification({
+          message: error.response.data.error,
+          type: "error",
+        });
+        setTimeout(() => {
+          setNotification(null);
+        }, 5000);
       });
-      setTimeout(() => {
-        setNotification(null);
-      }, 5000);
-    });
   };
 
   const deletePerson = (person) => {
