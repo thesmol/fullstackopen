@@ -1,0 +1,35 @@
+GET http://localhost:3001/api/persons
+
+### fine
+POST http://localhost:3001/api/persons/ HTTP/1.1
+content-type: application/json
+
+{
+    "name": "Sam Altman",
+    "number": "123456789"
+}
+
+### too short
+POST http://localhost:3001/api/persons/ HTTP/1.1
+content-type: application/json
+
+{
+    "name": "S",
+    "number": "1"
+}
+
+### missing name
+POST http://localhost:3001/api/persons/ HTTP/1.1
+content-type: application/json
+
+{
+    "number": "123456789"
+}
+
+### missing number
+POST http://localhost:3001/api/persons/ HTTP/1.1
+content-type: application/json
+
+{
+    "name": "Sam Altman"
+}

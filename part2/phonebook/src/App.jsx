@@ -41,7 +41,7 @@ const App = () => {
   const updatePerson = (person) => {
     if (
       window.confirm(
-        `${person.name} ia already added to the phonebook, 
+        `${person.name} is already added to the phonebook, 
         replace the old number with a new one?`,
       )
     ) {
@@ -51,6 +51,7 @@ const App = () => {
           setPersons(
             persons.map((p) => (p.id === updatedPerson.id ? updatedPerson : p)),
           );
+          setNewPerson({ name: "", number: "" });
         })
         .catch((error) => {
           if (error.response.status === 404) {
@@ -59,13 +60,16 @@ const App = () => {
               message: `Information about '${person.name}' has already been removed from the server.`,
               type: "error",
             });
-            setTimeout(() => {
-              setNotification(null);
-            }, 5000);
+          } else {
+            setNotification({
+              message: error.response.data.error,
+              type: "error",
+            });
           }
-        })
-        .finally(() => {
-          setNewPerson({ name: "", number: "" });
+
+          setTimeout(() => {
+            setNotification(null);
+          }, 5000);
         });
     }
   };
@@ -85,27 +89,36 @@ const App = () => {
       return;
     }
 
-    personsService.create(newPerson).then((addedPerson) => {
-      setPersons(persons.concat(addedPerson));
-      setNewPerson({ name: "", number: "" });
+    personsService
+      .create(newPerson)
+      .then((addedPerson) => {
+        setPersons(persons.concat(addedPerson));
+        setNewPerson({ name: "", number: "" });
 
-      setNotification({
-        message: `Added '${addedPerson.name}'`,
-        type: "success",
+        setNotification({
+          message: `Added '${addedPerson.name}'`,
+          type: "success",
+        });
+        setTimeout(() => {
+          setNotification(null);
+        }, 5000);
+      })
+      .catch((error) => {
+        setNotification({
+          message: error.response.data.error,
+          type: "error",
+        });
+        setTimeout(() => {
+          setNotification(null);
+        }, 5000);
       });
-      setTimeout(() => {
-        setNotification(null);
-      }, 5000);
-    });
   };
 
   const deletePerson = (person) => {
     if (window.confirm(`Delete person ${person.name} forever?`)) {
       personsService
         .remove(person.id)
-        .then((removedPerson) =>
-          setPersons(persons.filter((p) => p.id !== removedPerson.id)),
-        );
+        .then(() => setPersons(persons.filter((p) => p.id !== person.id)));
     }
   };
 
