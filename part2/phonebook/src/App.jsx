@@ -41,7 +41,7 @@ const App = () => {
   const updatePerson = (person) => {
     if (
       window.confirm(
-        `${person.name} ia already added to the phonebook, 
+        `${person.name} is already added to the phonebook, 
         replace the old number with a new one?`,
       )
     ) {

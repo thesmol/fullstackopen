@@ -10,13 +10,13 @@ const getById = (id) => {
   return axios.get(`${baseUrl}/${id}`).then((response) => response.data);
 };
 
-const create = (newObject) => {
-  return axios.post(baseUrl, newObject).then((response) => response.data);
+const create = (newPerson) => {
+  return axios.post(baseUrl, newPerson).then((response) => response.data);
 };
 
-const update = (id, newObject) => {
+const update = (id, updatedPerson) => {
   return axios
-    .put(`${baseUrl}/${id}`, newObject)
+    .put(`${baseUrl}/${id}`, updatedPerson)
     .then((response) => response.data);
 };
 
