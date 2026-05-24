@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const blogRoutes = require("./controllers/blogs");
 const config = require("./utils/config");
+const logger = require("./utils/logger");
 
 const app = express();
 
@@ -13,5 +14,5 @@ app.use("/api/blogs", blogRoutes);
 
 const PORT = config.PORT;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });
