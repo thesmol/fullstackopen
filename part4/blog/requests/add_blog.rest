@@ -1,0 +1,12 @@
+GET http://localhost:3003/api/blogs
+
+### 
+POST http://localhost:3003/api/blogs/ HTTP/1.1
+content-type: application/json
+
+{
+    "title": "I cant remember anything",
+    "author": "Watashi",
+    "url": "https://superblogs/cant-remember-anything",
+    "likes": 2
+}
