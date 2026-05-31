@@ -11,7 +11,6 @@ const api = supertest(app);
 
 beforeEach(async () => {
   await Blog.deleteMany({});
-
   await Blog.insertMany(helper.initialBlogs);
 });
 
@@ -28,10 +27,55 @@ describe("blogs api", () => {
     assert.strictEqual(response.body.length, helper.initialBlogs.length);
   });
 
+  test("a specific blog is within the returned blogs", async () => {
+    const response = await api.get("/api/blogs");
+
+    const contents = response.body.map((e) => e.id);
+    assert(contents.includes(helper.initialBlogs[0]._id));
+  });
+
   test("the unique identifier property of the blog posts is named id and not _id", async () => {
     const response = await api.get("/api/blogs");
 
     assert(response.body.every((b) => "id" in b && !("_id" in b)));
+  });
+
+  test("a valid blog can be added", async () => {
+    const newBlog = {
+      title: "I cant remember anything",
+      author: "Watashi",
+      url: "https://superblogs.eu/cant-remember-anything",
+      likes: 0,
+    };
+
+    await api
+      .post("/api/blogs")
+      .send(newBlog)
+      .expect(201)
+      .expect("Content-Type", /application\/json/);
+
+    const blogsAtEnd = await helper.blogsInDb();
+
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
+
+    const addedBlog = blogsAtEnd[blogsAtEnd.length - 1];
+    delete addedBlog.id;
+
+    assert.deepStrictEqual(newBlog, addedBlog);
+  });
+
+  test("blog without author is not added", async () => {
+    const newBlog = {
+      title: "I cant remember anything",
+      url: "https://superblogs.eu/cant-remember-anything",
+      likes: 0,
+    };
+
+    await api.post("/api/blogs").send(newBlog).expect(400);
+
+    const blogsAtEnd = await helper.blogsInDb();
+
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
   });
 });
 
