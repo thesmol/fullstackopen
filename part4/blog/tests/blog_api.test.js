@@ -25,8 +25,13 @@ describe("blogs api", () => {
 
   test("all blogs are returned", async () => {
     const response = await api.get("/api/blogs");
-
     assert.strictEqual(response.body.length, helper.initialBlogs.length);
+  });
+
+  test("the unique identifier property of the blog posts is named id and not _id", async () => {
+    const response = await api.get("/api/blogs");
+
+    assert(response.body.every((b) => "id" in b && !("_id" in b)));
   });
 });
 
