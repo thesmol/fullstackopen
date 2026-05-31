@@ -25,6 +25,7 @@ const blogSchema = new mongoose.Schema({
   likes: {
     type: Number,
     min: [0, "Blog can't have less then 0 likes"],
+    default: 0,
   },
 });
 

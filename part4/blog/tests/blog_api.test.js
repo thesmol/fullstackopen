@@ -77,6 +77,31 @@ describe("blogs api", () => {
 
     assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
   });
+
+  test("a valid blog without likes property can be added", async () => {
+    const newBlog = {
+      title: "I cant remember anything",
+      author: "Watashi",
+      url: "https://superblogs.eu/cant-remember-anything",
+    };
+
+    await api
+      .post("/api/blogs")
+      .send(newBlog)
+      .expect(201)
+      .expect("Content-Type", /application\/json/);
+
+    const blogsAtEnd = await helper.blogsInDb();
+
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
+
+    const addedBlog = blogsAtEnd[blogsAtEnd.length - 1];
+
+    delete addedBlog.id;
+    newBlog.likes = 0;
+
+    assert.deepStrictEqual(addedBlog, newBlog);
+  });
 });
 
 after(async () => {
