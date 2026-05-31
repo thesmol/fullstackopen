@@ -64,14 +64,21 @@ describe("blogs api", () => {
     assert.deepStrictEqual(newBlog, addedBlog);
   });
 
-  test("blog without author is not added", async () => {
-    const newBlog = {
-      title: "I cant remember anything",
+  test("blog without title or url is not added", async () => {
+    const newBlogNoTitle = {
+      author: "Watashi",
       url: "https://superblogs.eu/cant-remember-anything",
       likes: 0,
     };
 
-    await api.post("/api/blogs").send(newBlog).expect(400);
+    const newBlogNoUrl = {
+      author: "Watashi",
+      title: "I cant remember anything",
+      likes: 0,
+    };
+
+    await api.post("/api/blogs").send(newBlogNoTitle).expect(400);
+    await api.post("/api/blogs").send(newBlogNoUrl).expect(400);
 
     const blogsAtEnd = await helper.blogsInDb();
 
