@@ -1,0 +1,24 @@
+POST http://localhost:3003/api/blogs/ HTTP/1.1
+content-type: application/json
+
+{
+    "title": "I cant remember anything",
+    "author": "Watashi",
+    "url": "https://superblogs.eu/cant-remember-anything",
+    "likes": 0
+}
+
+### use correct id
+GET http://localhost:3003/api/blogs/6a1c503514997f18aeca240f
+
+### use correct id
+PUT http://localhost:3003/api/blogs/6a1c56290bb6189c5d1fa219
+Content-Type: application/json
+
+{
+  "likes": 250,
+  "title": "new title 10210"
+}
+
+### use correct id
+DELETE http://localhost:3003/api/blogs/6a1c503514997f18aeca240f

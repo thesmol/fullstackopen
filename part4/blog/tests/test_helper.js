@@ -44,11 +44,25 @@ const initialBlogs = [
 ];
 
 const blogsInDb = async () => {
-  const notes = await Blog.find({});
-  return notes.map((note) => note.toJSON());
+  const blogs = await Blog.find({});
+  return blogs.map((blog) => blog.toJSON());
+};
+
+const nonExistingId = async () => {
+  const blog = new Blog({
+    title: "I cant remember anything",
+    author: "Watashi",
+    url: "https://superblogs.eu/cant-remember-anything",
+  });
+
+  await blog.save();
+  await blog.deleteOne();
+
+  return blog._id.toString();
 };
 
 module.exports = {
   initialBlogs,
+  nonExistingId,
   blogsInDb,
 };
