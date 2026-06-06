@@ -1,0 +1,27 @@
+GET http://localhost:3003/api/users
+
+###
+GET http://localhost:3003/api/users/6a24813f2f04d48018cd3f29
+
+###
+POST http://localhost:3003/api/users
+Content-Type: application/json
+
+{
+    "username": "root",
+    "name": "Superuser",
+    "password": "salainen"
+}   
+
+###
+PUT http://localhost:3003/api/users/6a24813f2f04d48018cd3f29
+Content-Type: application/json
+
+{
+    "username": "root 2",
+    "name": "Superuser 2",
+    "password": "salainen 2"
+}   
+
+###
+DELETE http://localhost:3003/api/users/6a247fe0f73b56ee43512ba6

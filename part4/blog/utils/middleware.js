@@ -15,16 +15,36 @@ const unknownEndpoint = (_request, response) => {
 const errorHandler = (error, _request, response, next) => {
   logger.error(error.message);
 
-  switch (error.name) {
-    case "ValidationError": {
-      return response.status(400).json({ error: error.message });
-    }
-    case "CastError": {
-      return response.status(400).send({ error: "malformatted id" });
-    }
-    default:
-      next(error);
+  const { name } = error;
+
+  if (name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
   }
+
+  if (name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
+  }
+
+  if (
+    name === "MongoServerError" &&
+    error.message.includes("E11000 duplicate key error")
+  ) {
+    return response
+      .status(400)
+      .json({ error: "expected `username` to be unique" });
+  }
+
+  if (name === "JsonWebTokenError") {
+    return response.status(401).json({ error: "token invalid" });
+  }
+
+  if (name === "TokenExpiredError") {
+    return response.status(401).json({
+      error: "token expired",
+    });
+  }
+
+  next(error);
 };
 
 module.exports = {
