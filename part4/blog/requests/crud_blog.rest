@@ -1,3 +1,6 @@
+GET http://localhost:3003/api/blogs
+
+###
 POST http://localhost:3003/api/blogs/ HTTP/1.1
 content-type: application/json
 
@@ -5,14 +8,15 @@ content-type: application/json
     "title": "I cant remember anything",
     "author": "Watashi",
     "url": "https://superblogs.eu/cant-remember-anything",
-    "likes": 0
+    "likes": 0,
+    "userId": "6a2487ac3123f99d63874f74"
 }
 
 ### use correct id
-GET http://localhost:3003/api/blogs/6a1c503514997f18aeca240f
+GET http://localhost:3003/api/blogs/6a2a8a6a23efa0b8ceb6b328
 
 ### use correct id
-PUT http://localhost:3003/api/blogs/6a1c56290bb6189c5d1fa219
+PUT http://localhost:3003/api/blogs/6a2a8a6a23efa0b8ceb6b328
 Content-Type: application/json
 
 {
@@ -21,4 +25,4 @@ Content-Type: application/json
 }
 
 ### use correct id
-DELETE http://localhost:3003/api/blogs/6a1c503514997f18aeca240f
+DELETE http://localhost:3003/api/blogs/6a2a8a6a23efa0b8ceb6b328
