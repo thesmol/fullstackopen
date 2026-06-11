@@ -3,16 +3,24 @@ const assert = require("node:assert");
 
 const mongoose = require("mongoose");
 const supertest = require("supertest");
+const bcrypt = require("bcrypt");
 const app = require("../app");
 const helper = require("./test_helper");
 const Blog = require("../models/blog");
+const User = require("../models/user");
 
 const api = supertest(app);
 
 describe("when there is initially some blogs saved", () => {
   beforeEach(async () => {
     await Blog.deleteMany({});
+    await User.deleteMany({});
+
     await Blog.insertMany(helper.initialBlogs);
+
+    const passwordHash = await bcrypt.hash("secret", 10);
+    const user = new User({ username: "root", passwordHash });
+    await user.save();
   });
 
   test("the unique identifier property of the blog posts is named id and not _id", async () => {
@@ -67,11 +75,14 @@ describe("when there is initially some blogs saved", () => {
 
   describe("addition of a new blog", () => {
     test("succeeds with valid data", async () => {
+      const allUsers = await helper.usersInDb();
+
       const newBlog = {
         title: "I cant remember anything",
         author: "Watashi",
         url: "https://superblogs.eu/cant-remember-anything",
         likes: 0,
+        userId: allUsers[0].id,
       };
 
       await api
@@ -84,10 +95,16 @@ describe("when there is initially some blogs saved", () => {
 
       assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
 
-      const addedBlog = blogsAtEnd[blogsAtEnd.length - 1];
-      delete addedBlog.id;
+      const addedBlog = blogsAtEnd.find((b) => b.title === newBlog.title);
+      const addedData = {
+        title: addedBlog.title,
+        author: addedBlog.author,
+        url: addedBlog.url,
+        likes: addedBlog.likes,
+        userId: addedBlog.user.id,
+      };
 
-      assert.deepStrictEqual(newBlog, addedBlog);
+      assert.deepStrictEqual(newBlog, addedData);
     });
 
     test("fails with status code 400 if no title or url", async () => {
@@ -112,10 +129,13 @@ describe("when there is initially some blogs saved", () => {
     });
 
     test("succeeds with valid data but missing likes property", async () => {
+      const allUsers = await helper.usersInDb();
+
       const newBlog = {
         title: "I cant remember anything",
         author: "Watashi",
         url: "https://superblogs.eu/cant-remember-anything",
+        userId: allUsers[0].id,
       };
 
       await api
@@ -128,12 +148,19 @@ describe("when there is initially some blogs saved", () => {
 
       assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
 
-      const addedBlog = blogsAtEnd[blogsAtEnd.length - 1];
+      const addedBlog = blogsAtEnd.find((b) => b.title === newBlog.title);
 
-      delete addedBlog.id;
+      const addedData = {
+        title: addedBlog.title,
+        author: addedBlog.author,
+        url: addedBlog.url,
+        likes: addedBlog.likes,
+        userId: addedBlog.user.id,
+      };
+
       newBlog.likes = 0;
 
-      assert.deepStrictEqual(addedBlog, newBlog);
+      assert.deepStrictEqual(newBlog, addedData);
     });
   });
 
