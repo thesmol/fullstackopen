@@ -21,7 +21,7 @@ blogsRouter.get("/:id", async (request, response) => {
 });
 
 blogsRouter.post("/", async (request, response) => {
-  const { content, userId } = request.body;
+  const { userId, ...content } = request.body;
   const user = await User.findById(userId);
 
   if (!user) {
@@ -50,7 +50,12 @@ blogsRouter.put("/:id", async (request, response) => {
 
   const savedBlog = await foundBlog.save();
 
-  response.json(savedBlog);
+  const populated = await savedBlog.populate("user", {
+    username: 1,
+    name: 1,
+  });
+
+  response.json(populated);
 });
 
 blogsRouter.delete("/:id", async (request, response) => {
