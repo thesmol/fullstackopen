@@ -140,9 +140,90 @@ describe("when there is initially one user in db", () => {
     });
   });
 
-  describe("deletion of a user", () => {});
+  describe("deletion of a user", () => {
+    test("succeeds with status code 204 if id is valid", async () => {
+      const usersAtStart = await helper.usersInDb();
+      const userToDelete = usersAtStart[0];
 
-  describe("updating of a user", () => {});
+      await api.delete(`/api/users/${userToDelete.id}`).expect(204);
+
+      const usersAtEnd = await helper.usersInDb();
+
+      const ids = usersAtEnd.map((n) => n.id);
+      assert(!ids.includes(userToDelete.id));
+
+      assert.strictEqual(usersAtEnd.length, 0);
+    });
+
+    test("succeeds with status code 204 if user does not exist", async () => {
+      const usersAtStart = await helper.usersInDb();
+      const nonExistingId = await helper.nonExistingId();
+
+      await api.delete(`/api/users/${nonExistingId}`).expect(204);
+
+      assert.strictEqual(usersAtStart.length, 1);
+    });
+
+    test("failed with status code 400 if id is invalid", async () => {
+      const invalidId = "123";
+      await api.get(`/api/users/${invalidId}`).expect(400);
+    });
+  });
+
+  describe("updating of a user", () => {
+    test("succeeds with valid data", async () => {
+      const usersAtStart = await helper.usersInDb();
+      const userToUpdate = usersAtStart[0];
+
+      const newData = {
+        id: userToUpdate.id,
+        username: "React patterns 123123",
+        password: "Michael Chan",
+      };
+
+      await api.put(`/api/users/${userToUpdate.id}`).send(newData).expect(200);
+
+      const usersAtEnd = await helper.usersInDb();
+      const updatedUser = usersAtEnd.find((b) => b.id === userToUpdate.id);
+
+      assert.strictEqual(updatedUser.username, newData.username);
+      assert(await bcrypt.compare(newData.password, updatedUser.passwordHash));
+    });
+
+    test("fails with status code 400 if invalid user input", async () => {
+      const usersAtStart = await helper.usersInDb();
+      const userToUpdate = usersAtStart[0];
+
+      const newData = {
+        id: userToUpdate.id,
+        username: "1",
+        password: "1",
+      };
+
+      await api.put(`/api/users/${userToUpdate.id}`).send(newData).expect(400);
+
+      const usersAtEnd = await helper.usersInDb();
+      const updatedUser = usersAtEnd.find((b) => b.id === userToUpdate.id);
+
+      assert.deepStrictEqual(updatedUser, userToUpdate);
+    });
+
+    test("fails with status code 404 if blog does not exist", async () => {
+      const notExistingId = await helper.nonExistingId();
+
+      const newData = {
+        id: notExistingId,
+        username: "React patterns 123123",
+        password: "Michael Chan",
+      };
+      await api.put(`/api/users/${notExistingId}`).send(newData).expect(404);
+    });
+
+    test("fails with statuscode 400 if id is invalid", async () => {
+      const invalidId = "5a3d5da59070081a82a3445";
+      await api.get(`/api/users/${invalidId}`).expect(400);
+    });
+  });
 });
 
 after(async () => {
