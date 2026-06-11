@@ -162,6 +162,35 @@ describe("when there is initially some blogs saved", () => {
 
       assert.deepStrictEqual(newBlog, addedData);
     });
+
+    test("added block visible for user", async () => {
+      const startUsers = await helper.usersInDb();
+
+      const blogUser = startUsers[0];
+
+      const newBlog = {
+        title: "I cant remember anything",
+        author: "Watashi",
+        url: "https://superblogs.eu/cant-remember-anything",
+        likes: 0,
+        userId: blogUser.id,
+      };
+
+      const { body: savedBlog } = await api
+        .post("/api/blogs")
+        .send(newBlog)
+        .expect(201)
+        .expect("Content-Type", /application\/json/);
+
+      const blogsAtEnd = await helper.blogsInDb();
+
+      assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
+
+      const endUsers = await helper.usersInDb();
+      const updatedUser = endUsers.find((user) => user.id === blogUser.id);
+
+      assert(updatedUser.blogs.some((b) => b.id === savedBlog.id));
+    });
   });
 
   describe("deletion of a blog", () => {

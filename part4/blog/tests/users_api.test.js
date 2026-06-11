@@ -6,12 +6,14 @@ const bcrypt = require("bcrypt");
 const app = require("../app");
 const helper = require("./test_helper");
 const User = require("../models/user");
+const Blog = require("../models/blog");
 
 const api = supertest(app);
 
 describe("when there is initially two users in db", () => {
   beforeEach(async () => {
     await User.deleteMany({});
+    await Blog.deleteMany({});
 
     const users = await Promise.all(
       helper.initialUsers.map(async (user) => {
@@ -23,7 +25,20 @@ describe("when there is initially two users in db", () => {
         });
       }),
     );
-    await User.insertMany(users);
+    const savedUsers = await User.insertMany(users);
+
+    const mappedBlogs = helper.initialBlogs.map((blog, index) => ({
+      ...blog,
+      user: index % 2 === 0 ? savedUsers[0].id : savedUsers[1].id,
+    }));
+
+    const savedBlogs = await Blog.insertMany(mappedBlogs);
+
+    await Promise.all(
+      savedBlogs.map((blog) =>
+        User.findByIdAndUpdate(blog.user, { $push: { blogs: blog._id } }),
+      ),
+    );
   });
 
   describe("viewing user", () => {
@@ -48,6 +63,19 @@ describe("when there is initially two users in db", () => {
       const validNonexistingId = await helper.nonExistingId();
 
       await api.get(`/api/users/${validNonexistingId}`).expect(404);
+    });
+
+    test("users have blogs", async () => {
+      const users = await helper.usersInDb();
+      const userToView = users[0];
+
+      const result = await api
+        .get(`/api/users/${userToView.id}`)
+        .expect(200)
+        .expect("Content-Type", /application\/json/);
+
+      assert.deepStrictEqual(result.body.blogs, userToView.blogs);
+      assert(userToView.blogs.length > 0);
     });
   });
 
