@@ -64,12 +64,11 @@ usersRouter.put("/:id", async (request, response) => {
   if (errors.length > 0)
     return response.status(400).json({ error: errors.join(", ") });
 
-  foundUser.name = name;
-  foundUser.username = username;
-
-  const saltRounds = 10;
-  const passwordHash = await bcrypt.hash(password, saltRounds);
-  foundUser.passwordHash = passwordHash;
+  if (name !== undefined) foundUser.name = name;
+  if (username !== undefined) foundUser.username = username;
+  if (password) {
+    foundUser.passwordHash = await bcrypt.hash(password, 10);
+  }
 
   const savedUser = await foundUser.save();
   const populated = await savedUser.populate("blogs", {

@@ -9,14 +9,21 @@ const User = require("../models/user");
 
 const api = supertest(app);
 
-describe("when there is initially one user in db", () => {
+describe("when there is initially two users in db", () => {
   beforeEach(async () => {
     await User.deleteMany({});
 
-    const passwordHash = await bcrypt.hash("secret", 10);
-    const user = new User({ username: "root", passwordHash });
-
-    await user.save();
+    const users = await Promise.all(
+      helper.initialUsers.map(async (user) => {
+        const passwordHash = await bcrypt.hash(user.password, 10);
+        return new User({
+          username: user.username,
+          name: user.name,
+          passwordHash,
+        });
+      }),
+    );
+    await User.insertMany(users);
   });
 
   describe("viewing user", () => {
@@ -69,9 +76,10 @@ describe("when there is initially one user in db", () => {
 
     test("fails with proper statuscode and message if username already taken", async () => {
       const usersAtStart = await helper.usersInDb();
+      const takenName = usersAtStart[0].username;
 
       const newUser = {
-        username: "root",
+        username: takenName,
         name: "Superuser",
         password: "salainen",
       };
@@ -152,7 +160,7 @@ describe("when there is initially one user in db", () => {
       const ids = usersAtEnd.map((n) => n.id);
       assert(!ids.includes(userToDelete.id));
 
-      assert.strictEqual(usersAtEnd.length, 0);
+      assert.strictEqual(usersAtEnd.length, usersAtStart.length - 1);
     });
 
     test("succeeds with status code 204 if user does not exist", async () => {
@@ -161,7 +169,9 @@ describe("when there is initially one user in db", () => {
 
       await api.delete(`/api/users/${nonExistingId}`).expect(204);
 
-      assert.strictEqual(usersAtStart.length, 1);
+      const usersAtEnd = await helper.usersInDb();
+
+      assert.strictEqual(usersAtEnd.length, usersAtStart.length);
     });
 
     test("failed with status code 400 if id is invalid", async () => {
@@ -177,6 +187,7 @@ describe("when there is initially one user in db", () => {
 
       const newData = {
         id: userToUpdate.id,
+        name: "eee",
         username: "React patterns 123123",
         password: "Michael Chan",
       };
@@ -187,7 +198,33 @@ describe("when there is initially one user in db", () => {
       const updatedUser = usersAtEnd.find((b) => b.id === userToUpdate.id);
 
       assert.strictEqual(updatedUser.username, newData.username);
+      assert.strictEqual(updatedUser.name, newData.name);
       assert(await bcrypt.compare(newData.password, updatedUser.passwordHash));
+    });
+
+    test("fails with status code 400 if new username is already taken", async () => {
+      const usersAtStart = await helper.usersInDb();
+      const userToUpdate = usersAtStart[0];
+      const takenUsername = usersAtStart[1].username;
+
+      const newData = {
+        id: userToUpdate.id,
+        username: takenUsername,
+      };
+
+      const result = await api
+        .put(`/api/users/${userToUpdate.id}`)
+        .send(newData)
+        .expect(400);
+
+      console.log(result.body.error);
+
+      assert(result.body.error.includes("expected `username` to be unique"));
+
+      const usersAtEnd = await helper.usersInDb();
+      const updatedUser = usersAtEnd.find((b) => b.id === userToUpdate.id);
+
+      assert.strictEqual(updatedUser.username, userToUpdate.username);
     });
 
     test("fails with status code 400 if invalid user input", async () => {

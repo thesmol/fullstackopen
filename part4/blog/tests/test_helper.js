@@ -44,6 +44,19 @@ const initialBlogs = [
   },
 ];
 
+const initialUsers = [
+  {
+    username: "superuser1",
+    name: "Supe 1",
+    password: "salainen",
+  },
+  {
+    username: "superuser2",
+    name: "Supe 2",
+    password: "salainen",
+  },
+];
+
 const blogsInDb = async () => {
   const blogs = await Blog.find({}).populate("user", { username: 1, name: 1 });
   return blogs.map((blog) => blog.toJSON());
@@ -74,6 +87,7 @@ const nonExistingId = async () => {
 
 module.exports = {
   initialBlogs,
+  initialUsers,
   nonExistingId,
   blogsInDb,
   usersInDb,
