@@ -55,6 +55,15 @@ usersRouter.put("/:id", async (request, response) => {
     return response.status(404).end();
   }
 
+  const errors = [];
+  if (password && password.length < 3)
+    errors.push("Password must contains at least 3 characters");
+  if (username && username.length < 3)
+    errors.push("Username must contains at least 3 characters");
+
+  if (errors.length > 0)
+    return response.status(400).json({ error: errors.join(", ") });
+
   foundUser.name = name;
   foundUser.username = username;
 

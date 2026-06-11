@@ -200,7 +200,21 @@ describe("when there is initially one user in db", () => {
         password: "1",
       };
 
-      await api.put(`/api/users/${userToUpdate.id}`).send(newData).expect(400);
+      const result = await api
+        .put(`/api/users/${userToUpdate.id}`)
+        .send(newData)
+        .expect(400);
+
+      assert(
+        result.body.error.includes(
+          "Username must contains at least 3 characters",
+        ),
+      );
+      assert(
+        result.body.error.includes(
+          "Password must contains at least 3 characters",
+        ),
+      );
 
       const usersAtEnd = await helper.usersInDb();
       const updatedUser = usersAtEnd.find((b) => b.id === userToUpdate.id);
