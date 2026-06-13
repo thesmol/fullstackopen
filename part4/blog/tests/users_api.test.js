@@ -245,8 +245,6 @@ describe("when there is initially two users in db", () => {
         .send(newData)
         .expect(400);
 
-      console.log(result.body.error);
-
       assert(result.body.error.includes("expected `username` to be unique"));
 
       const usersAtEnd = await helper.usersInDb();
