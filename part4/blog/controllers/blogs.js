@@ -23,6 +23,10 @@ blogsRouter.get("/:id", async (request, response) => {
 blogsRouter.post("/", async (request, response) => {
   const body = request.body;
 
+  if (!request.user) {
+    return response.status(401).json({ error: "unauthorized" });
+  }
+
   const user = await User.findById(request.user.id);
 
   const savedBlog = await new Blog({
