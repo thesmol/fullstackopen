@@ -23,6 +23,10 @@ const errorHandler = (error, _request, response, next) => {
     return response.status(400).send({ error: "malformatted id" });
   }
 
+  if (name === "TypeError") {
+    return response.status(400).json({ error: "missing request body" });
+  }
+
   if (name === "ValidationError") {
     return response.status(400).json({ error: error.message });
   }

@@ -11,41 +11,56 @@ const User = require("../models/user");
 
 const api = supertest(app);
 
-describe("when there is initially some blogs saved", () => {
+describe("when there is initially some blogs saved, all created by 1st user, 2 users total", () => {
   beforeEach(async () => {
     await Blog.deleteMany({});
     await User.deleteMany({});
 
-    await Blog.insertMany(helper.initialBlogs);
+    const users = await Promise.all(
+      helper.initialUsers.map(async (user) => {
+        const passwordHash = await bcrypt.hash(user.password, 10);
+        return new User({
+          username: user.username,
+          name: user.name,
+          passwordHash,
+        });
+      }),
+    );
+    const savedUsers = await User.insertMany(users);
 
-    const passwordHash = await bcrypt.hash("secret", 10);
-    const user = new User({ username: "root", passwordHash });
-    await user.save();
+    const blogsWithUser = helper.initialBlogs.map((b) => ({
+      ...b,
+      user: savedUsers[0]._id,
+    }));
+
+    await Blog.insertMany(blogsWithUser);
   });
 
-  test("the unique identifier property of the blog posts is named id and not _id", async () => {
-    const response = await api.get("/api/blogs");
+  describe("general checks", () => {
+    test("the unique identifier property of the blog posts is named id and not _id", async () => {
+      const response = await api.get("/api/blogs");
 
-    assert(response.body.every((b) => "id" in b && !("_id" in b)));
-  });
+      assert(response.body.every((b) => "id" in b && !("_id" in b)));
+    });
 
-  test("blogs are returned as json", async () => {
-    await api
-      .get("/api/blogs")
-      .expect(200)
-      .expect("Content-Type", /application\/json/);
-  });
+    test("blogs are returned as json", async () => {
+      await api
+        .get("/api/blogs")
+        .expect(200)
+        .expect("Content-Type", /application\/json/);
+    });
 
-  test("all blogs are returned", async () => {
-    const response = await api.get("/api/blogs");
-    assert.strictEqual(response.body.length, helper.initialBlogs.length);
-  });
+    test("all blogs are returned", async () => {
+      const response = await api.get("/api/blogs");
+      assert.strictEqual(response.body.length, helper.initialBlogs.length);
+    });
 
-  test("a specific blog is within the returned blogs", async () => {
-    const response = await api.get("/api/blogs");
+    test("a specific blog is within the returned blogs", async () => {
+      const response = await api.get("/api/blogs");
 
-    const contents = response.body.map((e) => e.id);
-    assert(contents.includes(helper.initialBlogs[0]._id));
+      const contents = response.body.map((e) => e.id);
+      assert(contents.includes(helper.initialBlogs[0]._id));
+    });
   });
 
   describe("viewing a specific blog", () => {
@@ -69,41 +84,53 @@ describe("when there is initially some blogs saved", () => {
 
     test("fails with statuscode 400 if id is invalid", async () => {
       const invalidId = "5a3d5da59070081a82a3445";
-      await api.get(`/api/blogs/${invalidId}`).expect(400);
+      const response = await api.get(`/api/blogs/${invalidId}`).expect(400);
+      assert.strictEqual(response.body.error, "malformatted id");
     });
   });
 
   describe("addition of a new blog", () => {
     test("succeeds with valid data", async () => {
-      const allUsers = await helper.usersInDb();
-
       const newBlog = {
         title: "I cant remember anything",
         author: "Watashi",
         url: "https://superblogs.eu/cant-remember-anything",
         likes: 0,
-        userId: allUsers[0].id,
       };
+
+      const allUsers = await helper.usersInDb();
+      const firstUser = allUsers[0];
+      const firstUserCredentials = helper.initialUsers.find(
+        (u) => u.username === firstUser.username,
+      );
+      const loginResponse = await api
+        .post("/api/login")
+        .send({
+          username: firstUserCredentials.username,
+          password: firstUserCredentials.password,
+        })
+        .expect(200);
 
       await api
         .post("/api/blogs")
         .send(newBlog)
+        .set("Authorization", `Bearer ${loginResponse.body.token}`)
         .expect(201)
         .expect("Content-Type", /application\/json/);
 
       const blogsAtEnd = await helper.blogsInDb();
 
-      assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
-
       const addedBlog = blogsAtEnd.find((b) => b.title === newBlog.title);
+
       const addedData = {
         title: addedBlog.title,
         author: addedBlog.author,
         url: addedBlog.url,
         likes: addedBlog.likes,
-        userId: addedBlog.user.id,
       };
 
+      assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
+      assert.strictEqual(firstUser.id, addedBlog.user.id);
       assert.deepStrictEqual(newBlog, addedData);
     });
 
@@ -120,8 +147,29 @@ describe("when there is initially some blogs saved", () => {
         likes: 0,
       };
 
-      await api.post("/api/blogs").send(newBlogNoTitle).expect(400);
-      await api.post("/api/blogs").send(newBlogNoUrl).expect(400);
+      const allUsers = await helper.usersInDb();
+      const firstUser = allUsers[0];
+      const firstUserCredentials = helper.initialUsers.find(
+        (u) => u.username === firstUser.username,
+      );
+      const loginResponse = await api
+        .post("/api/login")
+        .send({
+          username: firstUserCredentials.username,
+          password: firstUserCredentials.password,
+        })
+        .expect(200);
+
+      await api
+        .post("/api/blogs")
+        .send(newBlogNoTitle)
+        .set("Authorization", `Bearer ${loginResponse.body.token}`)
+        .expect(400);
+      await api
+        .post("/api/blogs")
+        .send(newBlogNoUrl)
+        .set("Authorization", `Bearer ${loginResponse.body.token}`)
+        .expect(400);
 
       const blogsAtEnd = await helper.blogsInDb();
 
@@ -129,24 +177,33 @@ describe("when there is initially some blogs saved", () => {
     });
 
     test("succeeds with valid data but missing likes property", async () => {
-      const allUsers = await helper.usersInDb();
-
       const newBlog = {
         title: "I cant remember anything",
         author: "Watashi",
         url: "https://superblogs.eu/cant-remember-anything",
-        userId: allUsers[0].id,
       };
+
+      const allUsers = await helper.usersInDb();
+      const firstUser = allUsers[0];
+      const firstUserCredentials = helper.initialUsers.find(
+        (u) => u.username === firstUser.username,
+      );
+      const loginResponse = await api
+        .post("/api/login")
+        .send({
+          username: firstUserCredentials.username,
+          password: firstUserCredentials.password,
+        })
+        .expect(200);
 
       await api
         .post("/api/blogs")
         .send(newBlog)
+        .set("Authorization", `Bearer ${loginResponse.body.token}`)
         .expect(201)
         .expect("Content-Type", /application\/json/);
 
       const blogsAtEnd = await helper.blogsInDb();
-
-      assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
 
       const addedBlog = blogsAtEnd.find((b) => b.title === newBlog.title);
 
@@ -155,30 +212,40 @@ describe("when there is initially some blogs saved", () => {
         author: addedBlog.author,
         url: addedBlog.url,
         likes: addedBlog.likes,
-        userId: addedBlog.user.id,
       };
 
       newBlog.likes = 0;
 
+      assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
+      assert.strictEqual(firstUser.id, addedBlog.user.id);
       assert.deepStrictEqual(newBlog, addedData);
     });
 
     test("added block visible for user", async () => {
-      const startUsers = await helper.usersInDb();
-
-      const blogUser = startUsers[0];
-
       const newBlog = {
         title: "I cant remember anything",
         author: "Watashi",
         url: "https://superblogs.eu/cant-remember-anything",
         likes: 0,
-        userId: blogUser.id,
       };
+
+      const allUsers = await helper.usersInDb();
+      const firstUser = allUsers[0];
+      const firstUserCredentials = helper.initialUsers.find(
+        (u) => u.username === firstUser.username,
+      );
+      const loginResponse = await api
+        .post("/api/login")
+        .send({
+          username: firstUserCredentials.username,
+          password: firstUserCredentials.password,
+        })
+        .expect(200);
 
       const { body: savedBlog } = await api
         .post("/api/blogs")
         .send(newBlog)
+        .set("Authorization", `Bearer ${loginResponse.body.token}`)
         .expect(201)
         .expect("Content-Type", /application\/json/);
 
@@ -187,9 +254,45 @@ describe("when there is initially some blogs saved", () => {
       assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
 
       const endUsers = await helper.usersInDb();
-      const updatedUser = endUsers.find((user) => user.id === blogUser.id);
+      const updatedUser = endUsers.find((user) => user.id === firstUser.id);
 
       assert(updatedUser.blogs.some((b) => b.id === savedBlog.id));
+    });
+
+    test("failed with status 401 and proper message if token is invalid", async () => {
+      const newBlog = {
+        title: "I cant remember anything",
+        author: "Watashi",
+        url: "https://superblogs.eu/cant-remember-anything",
+        likes: 0,
+      };
+
+      const response = await api
+        .post("/api/blogs")
+        .send(newBlog)
+        .set("Authorization", "Bearer 123")
+        .expect(401);
+
+      const blogsAtEnd = await helper.blogsInDb();
+
+      assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
+      assert.strictEqual(response.body.error, "token invalid");
+    });
+
+    test("failed with status 401 and proper message if no token", async () => {
+      const newBlog = {
+        title: "I cant remember anything",
+        author: "Watashi",
+        url: "https://superblogs.eu/cant-remember-anything",
+        likes: 0,
+      };
+
+      const response = await api.post("/api/blogs").send(newBlog).expect(401);
+
+      const blogsAtEnd = await helper.blogsInDb();
+
+      assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
+      assert.strictEqual(response.body.error, "unauthorized");
     });
   });
 
@@ -198,7 +301,23 @@ describe("when there is initially some blogs saved", () => {
       const blogsAtStart = await helper.blogsInDb();
       const blogToDelete = blogsAtStart[0];
 
-      await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
+      const allUsers = await helper.usersInDb();
+      const blogUser = allUsers.find((u) => u.id === blogToDelete.user.id);
+      const userCredentials = helper.initialUsers.find(
+        (u) => u.username === blogUser.username,
+      );
+      const loginResponse = await api
+        .post("/api/login")
+        .send({
+          username: userCredentials.username,
+          password: userCredentials.password,
+        })
+        .expect(200);
+
+      await api
+        .delete(`/api/blogs/${blogToDelete.id}`)
+        .set("Authorization", `Bearer ${loginResponse.body.token}`)
+        .expect(204);
 
       const blogsAtEnd = await helper.blogsInDb();
 
@@ -212,14 +331,91 @@ describe("when there is initially some blogs saved", () => {
       const blogsAtStart = await helper.blogsInDb();
       const nonExistingId = await helper.nonExistingId();
 
-      await api.delete(`/api/blogs/${nonExistingId}`).expect(204);
+      const userCredentials = helper.initialUsers[0];
+      const loginResponse = await api
+        .post("/api/login")
+        .send({
+          username: userCredentials.username,
+          password: userCredentials.password,
+        })
+        .expect(200);
 
-      assert.strictEqual(blogsAtStart.length, helper.initialBlogs.length);
+      await api
+        .delete(`/api/blogs/${nonExistingId}`)
+        .set("Authorization", `Bearer ${loginResponse.body.token}`)
+        .expect(204);
+
+      const blogsAtEnd = await helper.blogsInDb();
+
+      assert.strictEqual(blogsAtStart.length, blogsAtEnd.length);
     });
 
     test("failed with status code 400 if id is invalid", async () => {
+      const blogsAtStart = await helper.blogsInDb();
+
       const invalidId = "123";
-      await api.get(`/api/blogs/${invalidId}`).expect(400);
+      const response = await api.get(`/api/blogs/${invalidId}`).expect(400);
+      assert.strictEqual(response.body.error, "malformatted id");
+
+      const blogsAtEnd = await helper.blogsInDb();
+
+      assert.strictEqual(blogsAtStart.length, blogsAtEnd.length);
+    });
+
+    test("failed with status 401 and proper message if token is invalid", async () => {
+      const blogsAtStart = await helper.blogsInDb();
+      const blogToDelete = blogsAtStart[0];
+
+      const response = await api
+        .delete(`/api/blogs/${blogToDelete.id}`)
+        .set("Authorization", "Bearer 123")
+        .expect(401);
+
+      const blogsAtEnd = await helper.blogsInDb();
+
+      assert.strictEqual(response.body.error, "token invalid");
+      assert.strictEqual(blogsAtStart.length, blogsAtEnd.length);
+    });
+
+    test("failed with status 401 and proper message if no token", async () => {
+      const blogsAtStart = await helper.blogsInDb();
+
+      const response = await api
+        .delete(`/api/blogs/${blogsAtStart[0].id}`)
+        .expect(401);
+
+      const blogsAtEnd = await helper.blogsInDb();
+
+      assert.strictEqual(response.body.error, "unauthorized");
+      assert.strictEqual(blogsAtStart.length, blogsAtEnd.length);
+    });
+
+    test("failed with status 401 and proper message if token from another user", async () => {
+      const blogsAtStart = await helper.blogsInDb();
+      const blogToDelete = blogsAtStart[0];
+
+      const allUsers = await helper.usersInDb();
+      const blogWrongUser = allUsers.find((u) => u.id !== blogToDelete.user.id);
+      const userCredentials = helper.initialUsers.find(
+        (u) => u.username === blogWrongUser.username,
+      );
+      const loginResponse = await api
+        .post("/api/login")
+        .send({
+          username: userCredentials.username,
+          password: userCredentials.password,
+        })
+        .expect(200);
+
+      const response = await api
+        .delete(`/api/blogs/${blogToDelete.id}`)
+        .set("Authorization", `Bearer ${loginResponse.body.token}`)
+        .expect(403);
+
+      const blogsAtEnd = await helper.blogsInDb();
+
+      assert.strictEqual(response.body.error, "forbidden");
+      assert.strictEqual(blogsAtStart.length, blogsAtEnd.length);
     });
   });
 
@@ -240,8 +436,15 @@ describe("when there is initially some blogs saved", () => {
 
       const blogsAtEnd = await helper.blogsInDb();
       const updatedBlog = blogsAtEnd.find((b) => b.id === blogToUpdate.id);
+      const updatedBlogData = {
+        id: updatedBlog.id,
+        title: updatedBlog.title,
+        author: updatedBlog.author,
+        url: updatedBlog.url,
+        likes: updatedBlog.likes,
+      };
 
-      assert.deepStrictEqual(updatedBlog, newData);
+      assert.deepStrictEqual(updatedBlogData, newData);
     });
 
     test("ignores author and url updates, only applies title and likes", async () => {
@@ -302,7 +505,9 @@ describe("when there is initially some blogs saved", () => {
 
     test("fails with statuscode 400 if id is invalid", async () => {
       const invalidId = "5a3d5da59070081a82a3445";
-      await api.get(`/api/blogs/${invalidId}`).expect(400);
+
+      const response = await api.put(`/api/blogs/${invalidId}`).expect(400);
+      assert.strictEqual(response.body.error, "malformatted id");
     });
   });
 });

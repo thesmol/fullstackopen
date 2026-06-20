@@ -44,7 +44,7 @@ blogsRouter.post("/", async (request, response) => {
 });
 
 blogsRouter.put("/:id", async (request, response) => {
-  const { likes, title } = request.body;
+  const body = request.body;
 
   const foundBlog = await Blog.findById(request.params.id);
 
@@ -52,8 +52,8 @@ blogsRouter.put("/:id", async (request, response) => {
     return response.status(404).end();
   }
 
-  if (title !== undefined) foundBlog.title = title;
-  if (likes !== undefined) foundBlog.likes = likes;
+  if (body.title !== undefined) foundBlog.title = body.title;
+  if (body.likes !== undefined) foundBlog.likes = body.likes;
 
   const savedBlog = await foundBlog.save();
 
@@ -66,18 +66,19 @@ blogsRouter.put("/:id", async (request, response) => {
 });
 
 blogsRouter.delete("/:id", async (request, response) => {
+  if (!request.user) {
+    return response.status(401).json({ error: "unauthorized" });
+  }
+
   const user = await User.findById(request.user.id);
   const blog = await Blog.findById(request.params.id);
 
-  if (!blog) {
-    return response.status(404).end();
-  }
-
-  if (blog.user.toString() !== user.id.toString()) {
+  if (blog && blog.user.toString() !== user.id.toString()) {
     return response.status(403).json({ error: "forbidden" });
   }
 
   await Blog.deleteOne({ _id: request.params.id });
+
   response.status(204).end();
 });
 
