@@ -1,3 +1,4 @@
 node_modules
 .env
-part3-notes-backend
+notes-backend
+notes-frontend
