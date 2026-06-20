@@ -1,0 +1,43 @@
+GET http://localhost:3003/api/blogs
+
+### Correct
+POST http://localhost:3003/api/blogs/ HTTP/1.1
+content-type: application/json
+
+{
+    "title": "I cant remember anything",
+    "author": "Watashi",
+    "url": "https://superblogs.eu/cant-remember-anything",
+    "likes": 0
+}
+
+### with no likes
+POST http://localhost:3003/api/blogs/ HTTP/1.1
+content-type: application/json
+
+{
+    "title": "I cant remember anything",
+    "author": "Watashi",
+    "url": "https://superblogs.eu/cant-remember-anything"
+}
+
+### Not all required fields
+POST http://localhost:3003/api/blogs/ HTTP/1.1
+content-type: application/json
+
+{
+    "title": "I cant remember anything"
+}
+
+### Wrong values
+POST http://localhost:3003/api/blogs/ HTTP/1.1
+content-type: application/json
+
+{
+    "title": "I1",
+    "author": "Wa",
+    "url": "popopo://superblogs/cant-remember-anything",
+    "likes": -100
+}
+
+
